@@ -1,28 +1,105 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Next.js Authentication System
+
+A secure authentication system built with Next.js, NextAuth.js, Prisma ORM, and PostgreSQL.
+
+## Features
+
+- User authentication with NextAuth.js
+- PostgreSQL database integration with Prisma ORM
+- Role-based authorization (Admin and User roles)
+- Registration and login pages
+- Protected routes with middleware
+- Modern UI with shadcn/ui components
+
+## Project Setup
+
+1. Next.js project with Pages Router
+2. PostgreSQL database connection (Neon DB)
+3. Prisma ORM integration
+4. NextAuth authentication system
+5. Role-based authorization
+6. shadcn/ui components for UI
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up your environment variables in `.env` file
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Default Admin User
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The system is seeded with a default admin user:
+- Email: admin@example.com
+- Password: admin123
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Project Structure
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+- `/pages` - Next.js pages
+- `/pages/api` - API routes
+- `/pages/auth` - Authentication pages
+- `/pages/dashboard` - Protected dashboard
+- `/components` - UI components
+- `/lib` - Utility functions
+- `/prisma` - Prisma configuration
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Key URLs
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- http://localhost:3000 - Homepage
+- http://localhost:3000/auth/login - Login page
+- http://localhost:3000/auth/register - Registration page
+- http://localhost:3000/dashboard - User dashboard (protected)
+
+## Security Implementation
+
+1. **Secure Authentication**:
+   - Password hashing with bcrypt
+   - JWT-based authentication with NextAuth.js
+   - CSRF protection built into NextAuth.js
+   - HTTP-only cookies for session management
+
+2. **Role-Based Access Control**:
+   - Distinct user roles (ADMIN, USER)
+   - Role verification in middleware
+   - Protected routes that check for authentication status
+   - Admin-only sections in dashboard
+
+3. **Server-Side Security**:
+   - Password never stored in plain text
+   - Input validation for registration
+   - Protected API routes
+   - Environment variables for secure configuration
+
+4. **Dashboard Access Control**:
+   - All authenticated users can access the base dashboard
+   - Admin-specific features are conditionally rendered
+   - Admin-only routes are protected by middleware
+   - Role checks in both client and server components
+
+## Implementation Details
+
+- **NextAuth Integration**: Custom credential provider with database adapter
+- **Prisma Schema**: User model with role enum and relations for sessions
+- **Middleware**: Route protection based on authentication and roles
+- **Pages**: SSR-compatible authentication flow
+- **API Routes**: Secure endpoints for user registration and authentication
+- **Database**: PostgreSQL with Neon DB for cloud hosting
+- **UI**: Modern interface with shadcn/ui components and Tailwind CSS
+
+## Technologies Used
+
+- Next.js
+- NextAuth.js
+- Prisma ORM
+- PostgreSQL (Neon DB)
+- shadcn/ui
+- Tailwind CSS
 
 ## Learn More
 
