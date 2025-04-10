@@ -33,6 +33,7 @@ export default async function handler(req, res) {
         email,
         password: hashedPassword,
         role: 'USER', // Default role
+        emailVerified: new Date() // Yeni kullanıcılar otomatik olarak doğrulanmış olsun
       },
     });
 

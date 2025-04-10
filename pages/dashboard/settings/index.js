@@ -30,14 +30,37 @@ import {
   UserCog, 
   Hash, 
   Paintbrush,
-  Pencil
+  Pencil,
+  AlertCircle
 } from "lucide-react";
+
+// Validation helpers
+const isValidUrl = (url) => {
+  if (!url || url.trim() === '') return true;
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+const isValidEmail = (email) => {
+  if (!email || email.trim() === '') return true;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const isValidNumber = (num) => {
+  return num === undefined || !isNaN(Number(num)) && Number(num) >= 0;
+};
 
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [validation, setValidation] = useState({});
   const [settings, setSettings] = useState({
     general: {
       siteName: "",
@@ -148,7 +171,50 @@ export default function SettingsPage() {
     }
   }, [status]);
 
+  const validateField = (section, field, value) => {
+    const errors = { ...validation };
+    const key = `${section}.${field}`;
+    
+    // Clear previous errors
+    delete errors[key];
+    
+    // URL validation
+    if (['siteUrl', 'logoUrl', 'faviconUrl', 'twitter', 'facebook', 'instagram', 'linkedin', 'github', 'youtube', 'medium'].includes(field)) {
+      if (!isValidUrl(value)) {
+        errors[key] = 'Geçerli bir URL giriniz';
+      }
+    }
+    
+    // Email validation
+    if (['smtpUsername', 'senderEmail'].includes(field)) {
+      if (!isValidEmail(value)) {
+        errors[key] = 'Geçerli bir e-posta adresi giriniz';
+      }
+    }
+    
+    // Number validation
+    if (['postsPerPage', 'smtpPort', 'maxCommentLength', 'minCommentLength'].includes(field)) {
+      if (!isValidNumber(value)) {
+        errors[key] = 'Geçerli bir sayı giriniz';
+      }
+    }
+    
+    // Required fields
+    if (['siteName', 'siteDescription', 'metaTitle', 'metaDescription'].includes(field)) {
+      if (!value || value.trim() === '') {
+        errors[key] = 'Bu alan zorunludur';
+      }
+    }
+    
+    setValidation(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleChange = (section, field, value) => {
+    // Validate the field
+    validateField(section, field, value);
+    
+    // Update the state
     setSettings(prev => ({
       ...prev,
       [section]: {
@@ -158,7 +224,63 @@ export default function SettingsPage() {
     }));
   };
 
+  const validateSection = (section) => {
+    const sectionData = settings[section];
+    let isValid = true;
+    const errors = { ...validation };
+    
+    // Validate each field in the section
+    for (const [field, value] of Object.entries(sectionData)) {
+      const key = `${section}.${field}`;
+      
+      // URL validation
+      if (['siteUrl', 'logoUrl', 'faviconUrl', 'twitter', 'facebook', 'instagram', 'linkedin', 'github', 'youtube', 'medium'].includes(field)) {
+        if (!isValidUrl(value)) {
+          errors[key] = 'Geçerli bir URL giriniz';
+          isValid = false;
+        }
+      }
+      
+      // Email validation
+      if (['smtpUsername', 'senderEmail'].includes(field)) {
+        if (!isValidEmail(value)) {
+          errors[key] = 'Geçerli bir e-posta adresi giriniz';
+          isValid = false;
+        }
+      }
+      
+      // Number validation
+      if (['postsPerPage', 'smtpPort', 'maxCommentLength', 'minCommentLength'].includes(field)) {
+        if (!isValidNumber(value)) {
+          errors[key] = 'Geçerli bir sayı giriniz';
+          isValid = false;
+        }
+      }
+      
+      // Required fields
+      if (['siteName', 'siteDescription', 'metaTitle', 'metaDescription'].includes(field)) {
+        if (!value || value.trim() === '') {
+          errors[key] = 'Bu alan zorunludur';
+          isValid = false;
+        }
+      }
+    }
+    
+    setValidation(errors);
+    return isValid;
+  };
+
   const handleSaveSettings = async (section) => {
+    // Validate the entire section before saving
+    if (!validateSection(section)) {
+      toast({
+        title: "Doğrulama Hatası",
+        description: "Lütfen form alanlarındaki hataları düzeltin.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setSaving(true);
     
     try {
@@ -255,9 +377,10 @@ export default function SettingsPage() {
             onChange={handleChange}
             onSave={() => handleSaveSettings("general")}
             saving={saving}
+            validation={validation}
             fields={[
-              { name: "siteName", label: "Site Adı", type: "text" },
-              { name: "siteDescription", label: "Site Açıklaması", type: "textarea" },
+              { name: "siteName", label: "Site Adı", type: "text", required: true },
+              { name: "siteDescription", label: "Site Açıklaması", type: "textarea", required: true },
               { name: "siteUrl", label: "Site URL", type: "url" },
               { name: "logoUrl", label: "Logo URL", type: "text" },
               { name: "faviconUrl", label: "Favicon URL", type: "text" },
@@ -286,9 +409,10 @@ export default function SettingsPage() {
             onChange={handleChange}
             onSave={() => handleSaveSettings("seo")}
             saving={saving}
+            validation={validation}
             fields={[
-              { name: "metaTitle", label: "Meta Başlık", type: "text" },
-              { name: "metaDescription", label: "Meta Açıklama", type: "textarea" },
+              { name: "metaTitle", label: "Meta Başlık", type: "text", required: true },
+              { name: "metaDescription", label: "Meta Açıklama", type: "textarea", required: true },
               { name: "metaKeywords", label: "Meta Anahtar Kelimeler", type: "text" },
               { name: "googleAnalyticsId", label: "Google Analytics ID", type: "text" },
               { name: "enableSitemap", label: "Site Haritasını Etkinleştir", type: "switch" },
@@ -313,6 +437,7 @@ export default function SettingsPage() {
             onChange={handleChange}
             onSave={() => handleSaveSettings("comments")}
             saving={saving}
+            validation={validation}
             fields={[
               { name: "enableComments", label: "Yorumları Etkinleştir", type: "switch" },
               { name: "moderateComments", label: "Yorumları Denetle", type: "switch" },
@@ -339,6 +464,7 @@ export default function SettingsPage() {
             onChange={handleChange}
             onSave={() => handleSaveSettings("email")}
             saving={saving}
+            validation={validation}
             fields={[
               { name: "smtpServer", label: "SMTP Sunucu", type: "text" },
               { name: "smtpPort", label: "SMTP Port", type: "number" },
@@ -362,6 +488,7 @@ export default function SettingsPage() {
             onChange={handleChange}
             onSave={() => handleSaveSettings("social")}
             saving={saving}
+            validation={validation}
             fields={[
               { name: "twitter", label: "Twitter URL", type: "url" },
               { name: "facebook", label: "Facebook URL", type: "url" },
@@ -383,6 +510,7 @@ export default function SettingsPage() {
             onChange={handleChange}
             onSave={() => handleSaveSettings("appearance")}
             saving={saving}
+            validation={validation}
             fields={[
               { name: "theme", label: "Tema", type: "select", options: [
                 { value: "light", label: "Açık Tema" },
@@ -419,7 +547,7 @@ export default function SettingsPage() {
   );
 }
 
-function SettingsForm({ title, description, settings, section, onChange, onSave, saving, fields }) {
+function SettingsForm({ title, description, settings, section, onChange, onSave, saving, validation, fields }) {
   return (
     <Card>
       <CardHeader>
@@ -427,107 +555,137 @@ function SettingsForm({ title, description, settings, section, onChange, onSave,
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {fields.map((field) => (
-          <div key={field.name} className="grid gap-2">
-            <Label htmlFor={field.name}>{field.label}</Label>
-            
-            {field.type === "text" && (
-              <Input
-                id={field.name}
-                value={settings[field.name] || ""}
-                onChange={(e) => onChange(section, field.name, e.target.value)}
-              />
-            )}
-            
-            {field.type === "textarea" && (
-              <Textarea
-                id={field.name}
-                value={settings[field.name] || ""}
-                onChange={(e) => onChange(section, field.name, e.target.value)}
-              />
-            )}
-            
-            {field.type === "number" && (
-              <Input
-                id={field.name}
-                type="number"
-                value={settings[field.name] || 0}
-                onChange={(e) => onChange(section, field.name, Number(e.target.value))}
-              />
-            )}
-            
-            {field.type === "url" && (
-              <Input
-                id={field.name}
-                type="url"
-                value={settings[field.name] || ""}
-                onChange={(e) => onChange(section, field.name, e.target.value)}
-              />
-            )}
-            
-            {field.type === "email" && (
-              <Input
-                id={field.name}
-                type="email"
-                value={settings[field.name] || ""}
-                onChange={(e) => onChange(section, field.name, e.target.value)}
-              />
-            )}
-            
-            {field.type === "password" && (
-              <Input
-                id={field.name}
-                type="password"
-                value={settings[field.name] || ""}
-                onChange={(e) => onChange(section, field.name, e.target.value)}
-              />
-            )}
-            
-            {field.type === "color" && (
-              <div className="flex items-center gap-2">
-                <Input
-                  id={field.name}
-                  type="color"
-                  className="w-12 h-10 p-1"
-                  value={settings[field.name] || "#000000"}
-                  onChange={(e) => onChange(section, field.name, e.target.value)}
-                />
-                <Input
-                  value={settings[field.name] || "#000000"}
-                  onChange={(e) => onChange(section, field.name, e.target.value)}
-                />
-              </div>
-            )}
-            
-            {field.type === "select" && (
-              <select
-                id={field.name}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={settings[field.name] || ""}
-                onChange={(e) => onChange(section, field.name, e.target.value)}
-              >
-                {field.options.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            )}
-            
-            {field.type === "switch" && (
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id={field.name}
-                  checked={settings[field.name] || false}
-                  onCheckedChange={(checked) => onChange(section, field.name, checked)}
-                />
-                <Label htmlFor={field.name}>
-                  {settings[field.name] ? "Açık" : "Kapalı"}
+        {fields.map((field) => {
+          const errorKey = `${section}.${field.name}`;
+          const hasError = validation[errorKey];
+          
+          return (
+            <div key={field.name} className="grid gap-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor={field.name} className={field.required ? "after:content-['*'] after:text-red-500 after:ml-1" : ""}>
+                  {field.label}
                 </Label>
+                {hasError && (
+                  <div className="text-xs text-red-500 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    {hasError}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        ))}
+              
+              {field.type === "text" && (
+                <Input
+                  id={field.name}
+                  value={settings[field.name] || ""}
+                  onChange={(e) => onChange(section, field.name, e.target.value)}
+                  className={hasError ? "border-red-500" : ""}
+                  required={field.required}
+                />
+              )}
+              
+              {field.type === "textarea" && (
+                <Textarea
+                  id={field.name}
+                  value={settings[field.name] || ""}
+                  onChange={(e) => onChange(section, field.name, e.target.value)}
+                  className={hasError ? "border-red-500" : ""}
+                  required={field.required}
+                />
+              )}
+              
+              {field.type === "number" && (
+                <Input
+                  id={field.name}
+                  type="number"
+                  value={settings[field.name] || 0}
+                  onChange={(e) => onChange(section, field.name, Number(e.target.value))}
+                  className={hasError ? "border-red-500" : ""}
+                  min={0}
+                  required={field.required}
+                />
+              )}
+              
+              {field.type === "url" && (
+                <Input
+                  id={field.name}
+                  type="url"
+                  value={settings[field.name] || ""}
+                  onChange={(e) => onChange(section, field.name, e.target.value)}
+                  className={hasError ? "border-red-500" : ""}
+                  required={field.required}
+                />
+              )}
+              
+              {field.type === "email" && (
+                <Input
+                  id={field.name}
+                  type="email"
+                  value={settings[field.name] || ""}
+                  onChange={(e) => onChange(section, field.name, e.target.value)}
+                  className={hasError ? "border-red-500" : ""}
+                  required={field.required}
+                />
+              )}
+              
+              {field.type === "password" && (
+                <Input
+                  id={field.name}
+                  type="password"
+                  value={settings[field.name] || ""}
+                  onChange={(e) => onChange(section, field.name, e.target.value)}
+                  className={hasError ? "border-red-500" : ""}
+                  required={field.required}
+                />
+              )}
+              
+              {field.type === "color" && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    id={field.name}
+                    type="color"
+                    className="w-12 h-10 p-1"
+                    value={settings[field.name] || "#000000"}
+                    onChange={(e) => onChange(section, field.name, e.target.value)}
+                  />
+                  <Input
+                    value={settings[field.name] || "#000000"}
+                    onChange={(e) => onChange(section, field.name, e.target.value)}
+                    className={hasError ? "border-red-500" : ""}
+                  />
+                </div>
+              )}
+              
+              {field.type === "select" && (
+                <select
+                  id={field.name}
+                  className={`flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${hasError ? "border-red-500" : ""}`}
+                  value={settings[field.name] || ""}
+                  onChange={(e) => onChange(section, field.name, e.target.value)}
+                  required={field.required}
+                >
+                  {field.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+              
+              {field.type === "switch" && (
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id={field.name}
+                    checked={settings[field.name] || false}
+                    onCheckedChange={(checked) => onChange(section, field.name, checked)}
+                  />
+                  <Label htmlFor={field.name}>
+                    {settings[field.name] ? "Açık" : "Kapalı"}
+                  </Label>
+                </div>
+              )}
+            </div>
+          );
+        })}
       </CardContent>
       <CardFooter>
         <Button onClick={onSave} disabled={saving}>

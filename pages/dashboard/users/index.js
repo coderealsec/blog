@@ -71,15 +71,14 @@ export default function UsersPage() {
     name: "",
     email: "",
     role: "user",
-    isActive: true
+    emailVerified: true
   });
 
   // Kullanıcı rolleri
   const roles = [
-    { value: "admin", label: "Admin" },
-    { value: "editor", label: "Editör" },
-    { value: "author", label: "Yazar" },
-    { value: "user", label: "Kullanıcı" }
+    { value: "ADMIN", label: "Admin" },
+    { value: "EDITOR", label: "Editör" },
+    { value: "USER", label: "Kullanıcı" }
   ];
 
   useEffect(() => {
@@ -105,7 +104,16 @@ export default function UsersPage() {
       }
       
       const data = await response.json();
-      setUsers(data);
+      
+      // Kullanıcıların aktif durumunu emailVerified tarihine göre belirle
+      const processedUsers = data.map(user => ({
+        ...user,
+        // Kullanıcı aktif olarak kabul edilir eğer emailVerified null DEĞİLSE
+        isActive: user.emailVerified !== null
+      }));
+      
+      console.log("Kullanıcılar yüklendi:", processedUsers);
+      setUsers(processedUsers);
       
     } catch (err) {
       console.error("Kullanıcılar yüklenirken hata:", err);
@@ -148,12 +156,20 @@ export default function UsersPage() {
         
       const method = editMode ? "PUT" : "POST";
       
+      // emailVerified değerini isActive olarak API'ye gönder
+      // frontend'de emailVerified = true/false, API'de isActive = true/false
+      const apiData = {
+        ...formData,
+        isActive: formData.emailVerified,
+        emailVerified: undefined // API'de bu alanı kullanmıyoruz
+      };
+      
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(apiData)
       });
       
       if (!response.ok) {
@@ -175,8 +191,8 @@ export default function UsersPage() {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role || "user",
-      isActive: user.isActive
+      role: user.role || "USER",
+      emailVerified: user.emailVerified !== null
     });
     setSelectedUser(user);
     setEditMode(true);
@@ -188,8 +204,8 @@ export default function UsersPage() {
       id: null,
       name: "",
       email: "",
-      role: "user",
-      isActive: true
+      role: "USER",
+      emailVerified: true
     });
     setSelectedUser(null);
     setEditMode(false);
@@ -222,12 +238,12 @@ export default function UsersPage() {
   // Kullanıcı rol badgesi
   const getRoleBadge = (role) => {
     switch (role) {
-      case "admin":
+      case "ADMIN":
         return <Badge className="bg-red-600">Admin</Badge>;
-      case "editor":
+      case "EDITOR":
         return <Badge className="bg-blue-600">Editör</Badge>;
-      case "author":
-        return <Badge className="bg-purple-600">Yazar</Badge>;
+      case "USER":
+        return <Badge variant="outline">Kullanıcı</Badge>;
       default:
         return <Badge variant="outline">Kullanıcı</Badge>;
     }
@@ -337,8 +353,8 @@ export default function UsersPage() {
                 <input
                   type="checkbox"
                   id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  checked={formData.emailVerified}
+                  onChange={(e) => setFormData({ ...formData, emailVerified: e.target.checked })}
                   className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                 />
                 <Label htmlFor="isActive">Aktif</Label>
@@ -423,7 +439,7 @@ export default function UsersPage() {
                       <TableCell>
                         <div className="flex items-center">
                           <span 
-                            className={`flex items-center ${user.isActive ? "text-green-600" : "text-gray-500"}`}
+                            className={`flex items-center ${user.isActive ? "text-green-600" : "text-red-500"}`}
                           >
                             {user.isActive ? (
                               <>

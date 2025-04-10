@@ -124,41 +124,127 @@ async function getSettingsFromDB() {
     };
   } catch (error) {
     console.error("Error loading settings from DB:", error);
+    
+    // Provide more detailed error logging
+    if (error.code) {
+      console.error(`Prisma error code: ${error.code}`);
+      console.error(`Prisma error message: ${error.message}`);
+    }
+    
     return defaultSettings;
   }
 }
 
 // Helper to save settings to database
 async function saveSettingsToDB(section, data) {
-  // Process each key in the data object
-  for (const [key, value] of Object.entries(data)) {
-    const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-    
-    // Try to find existing setting
-    const existingSetting = await prisma.settings.findFirst({
-      where: {
-        section,
-        key
-      }
-    });
-    
-    if (existingSetting) {
-      // Update existing setting
-      await prisma.settings.update({
-        where: { id: existingSetting.id },
-        data: { value: stringValue }
-      });
-    } else {
-      // Create new setting
-      await prisma.settings.create({
-        data: {
-          section,
-          key,
-          value: stringValue
+  try {
+    // Use a transaction to ensure all settings updates are atomic
+    return await prisma.$transaction(async (tx) => {
+      // Process each key in the data object
+      for (const [key, value] of Object.entries(data)) {
+        const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+        
+        // Try to find existing setting
+        const existingSetting = await tx.settings.findFirst({
+          where: {
+            section,
+            key
+          }
+        });
+        
+        if (existingSetting) {
+          // Update existing setting
+          await tx.settings.update({
+            where: { id: existingSetting.id },
+            data: { 
+              value: stringValue,
+              updatedAt: new Date() 
+            }
+          });
+        } else {
+          // Create new setting
+          await tx.settings.create({
+            data: {
+              section,
+              key,
+              value: stringValue
+            }
+          });
         }
-      });
+      }
+      
+      return { success: true };
+    });
+  } catch (error) {
+    console.error("Error saving settings to DB:", error);
+    
+    // Provide more detailed error logging
+    if (error.code) {
+      console.error(`Prisma error code: ${error.code}`);
+      console.error(`Prisma error message: ${error.message}`);
+    }
+    
+    throw error;
+  }
+}
+
+// Validate data before saving
+function validateSettingsData(section, data) {
+  // Check if section exists
+  if (!defaultSettings[section]) {
+    return {
+      valid: false,
+      message: `Geçersiz ayar bölümü: ${section}`
+    };
+  }
+  
+  // Check if data is present
+  if (!data || Object.keys(data).length === 0) {
+    return {
+      valid: false,
+      message: "Ayar verisi boş olamaz"
+    };
+  }
+  
+  // Validate URL fields
+  const urlFields = ['siteUrl', 'logoUrl', 'faviconUrl', 'twitter', 'facebook', 'instagram', 'linkedin', 'github', 'youtube', 'medium'];
+  for (const field of urlFields) {
+    if (data[field] && typeof data[field] === 'string' && data[field].trim() !== '') {
+      try {
+        new URL(data[field]);
+      } catch (e) {
+        return {
+          valid: false,
+          message: `Geçersiz URL: ${field}`
+        };
+      }
     }
   }
+  
+  // Validate email fields
+  const emailFields = ['smtpUsername', 'senderEmail'];
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  for (const field of emailFields) {
+    if (data[field] && typeof data[field] === 'string' && data[field].trim() !== '' && !emailRegex.test(data[field])) {
+      return {
+        valid: false,
+        message: `Geçersiz e-posta adresi: ${field}`
+      };
+    }
+  }
+  
+  // Validate numeric fields
+  const numericFields = ['postsPerPage', 'smtpPort', 'maxCommentLength', 'minCommentLength'];
+  for (const field of numericFields) {
+    if (data[field] !== undefined && (isNaN(Number(data[field])) || Number(data[field]) < 0)) {
+      return {
+        valid: false,
+        message: `Geçersiz sayısal değer: ${field}`
+      };
+    }
+  }
+  
+  return { valid: true };
 }
 
 export default async function handler(req, res) {
@@ -189,19 +275,36 @@ export default async function handler(req, res) {
     // POST method for updating settings
     else if (req.method === "POST") {
       // Only authenticated admin users can update settings
-      if (!session || session.user.role !== "ADMIN") {
+      if (!session) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Bu işlem için giriş yapmanız gerekiyor." 
+        });
+      }
+      
+      if (session.user.role !== "ADMIN") {
         return res.status(403).json({ 
           success: false, 
-          message: "Bu işlem için yetkiniz bulunmamaktadır." 
+          message: "Bu işlem için yönetici haklarına sahip olmanız gerekiyor." 
         });
       }
 
       const { section, data } = req.body;
       
-      if (!section || !data || !defaultSettings[section]) {
+      // Basic validation
+      if (!section || !data) {
         return res.status(400).json({ 
           success: false, 
-          message: "Geçersiz ayar bölümü veya veri." 
+          message: "Bölüm ve veri alanları zorunludur." 
+        });
+      }
+      
+      // Advanced validation
+      const validation = validateSettingsData(section, data);
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: validation.message
         });
       }
       
@@ -217,13 +320,14 @@ export default async function handler(req, res) {
     
     return res.status(405).json({ 
       success: false, 
-      message: "Method not allowed" 
+      message: "Method not allowed. Only GET and POST methods are supported." 
     });
   } catch (error) {
     console.error("Settings API Error:", error);
     return res.status(500).json({ 
       success: false, 
-      message: "Ayar işlemi sırasında bir hata oluştu."
+      message: "Ayar işlemi sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 } 

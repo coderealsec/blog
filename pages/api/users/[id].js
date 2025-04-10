@@ -113,7 +113,7 @@ async function handler(req, res) {
         });
       }
       
-      // isActive alanı şema tanımında olmadığı için emailVerified alanını kullanıyoruz
+      // isActive alanını emailVerified alanına dönüştür
       // Kullanıcı aktif değilse emailVerified null, aktifse bir tarih değeri
       const updatedUser = await prisma.user.update({
         where: { id },
@@ -125,7 +125,10 @@ async function handler(req, res) {
       // Güvenlik için şifreyi döndürme
       const { password: _, ...userWithoutPassword } = updatedUser;
       
-      return res.status(200).json(userWithoutPassword);
+      return res.status(200).json({
+        ...userWithoutPassword,
+        isActive // İstemci tarafının kolay kullanımı için isActive alanını döndür
+      });
     } 
     
     // DELETE: Kullanıcıyı sil

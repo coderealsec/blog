@@ -48,7 +48,7 @@ async function handler(req, res) {
     
     // POST: Yeni kullanıcı oluştur
     else if (req.method === 'POST') {
-      const { name, email, role = 'USER', password } = req.body;
+      const { name, email, role = 'USER', password, isActive = true } = req.body;
       
       // Zorunlu alanları kontrol et
       if (!name || !email) {
@@ -82,21 +82,24 @@ async function handler(req, res) {
         console.log(`Kullanıcı için oluşturulan şifre: ${randomPassword}`);
       }
       
-      // Kullanıcıyı oluştur
+      // Kullanıcıyı oluştur - isActive değerine göre emailVerified alanını ayarla
       const user = await prisma.user.create({
         data: {
           name,
           email,
           password: hashedPassword,
           role,
-          emailVerified: new Date() // Varsayılan olarak e-posta doğrulanmış olarak işaretle
+          emailVerified: isActive ? new Date() : null // isActive=true ise aktif, değilse pasif
         }
       });
       
       // Güvenlik için şifreyi döndürme
       const { password: _, ...userWithoutPassword } = user;
       
-      return res.status(201).json(userWithoutPassword);
+      return res.status(201).json({
+        ...userWithoutPassword,
+        isActive: !!user.emailVerified // isActive alanını ekle
+      });
     } 
     
     // Desteklenmeyen HTTP metodu
