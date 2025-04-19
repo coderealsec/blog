@@ -34,13 +34,6 @@ export default function NewBlogPost() {
     seoKeywords: "",
   });
 
-  // Check authentication
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
-
   // Fetch categories and tags
   useEffect(() => {
     if (status === "authenticated") {

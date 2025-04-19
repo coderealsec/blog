@@ -16,7 +16,7 @@ import {
 import { 
   Switch
 } from "@/components/ui/switch";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { 
   Settings, 
   Save,
@@ -61,6 +61,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [validation, setValidation] = useState({});
+  const { toast } = useToast();
   const [settings, setSettings] = useState({
     general: {
       siteName: "",
@@ -139,13 +140,6 @@ export default function SettingsPage() {
       customCss: ""
     }
   });
-
-  useEffect(() => {
-    // Kimlik doğrulama kontrolü
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
 
   useEffect(() => {
     // Ayarları API'den yükleme

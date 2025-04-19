@@ -113,7 +113,10 @@ export default function BlogPage() {
     try {
       const response = await fetch('/api/blog/categories');
       if (!response.ok) {
-        throw new Error('Kategoriler getirilemedi');
+        console.error('Kategori API hatası:', response.status);
+        // Hata fırlatmak yerine boş array ile devam et
+        setCategories([]);
+        return;
       }
       
       const data = await response.json();
@@ -121,6 +124,8 @@ export default function BlogPage() {
       
     } catch (err) {
       console.error('Kategorileri getirme hatası:', err);
+      // Hata durumunda boş array kullan
+      setCategories([]);
     }
   };
   
@@ -129,7 +134,10 @@ export default function BlogPage() {
     try {
       const response = await fetch('/api/blog/tags');
       if (!response.ok) {
-        throw new Error('Etiketler getirilemedi');
+        console.error('Etiket API hatası:', response.status);
+        // Hata fırlatmak yerine boş array ile devam et
+        setTags([]);
+        return;
       }
       
       const data = await response.json();
@@ -137,6 +145,8 @@ export default function BlogPage() {
       
     } catch (err) {
       console.error('Etiketleri getirme hatası:', err);
+      // Hata durumunda boş array kullan
+      setTags([]);
     }
   };
   

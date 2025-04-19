@@ -4,17 +4,51 @@ import { useRouter } from 'next/router';
 import { Button } from '../components/ui/button';
 import { useEffect, useState } from 'react';
 import { Terminal, Server, Cloud, GitBranch, FileCode, Workflow } from 'lucide-react';
+import Image from 'next/image';
+import { formatDate } from '@/lib/utils';
 
 export default function Home() {
   const { data: session } = useSession();
   const router = useRouter();
   const [error, setError] = useState('');
+  const [latestPosts, setLatestPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
 
   useEffect(() => {
     if (router.query.error === 'admin_required') {
       setError('Yalnızca yönetici hesapları dashboard\'a erişebilir.');
     }
   }, [router.query.error]);
+
+  // Fetch latest blog posts
+  useEffect(() => {
+    const fetchLatestPosts = async () => {
+      try {
+        setLoadingPosts(true);
+        
+        // Fetch the latest 3 published posts
+        const params = new URLSearchParams();
+        params.append('limit', 3);
+        params.append('orderBy', 'publishedAt');
+        params.append('order', 'desc');
+        
+        const response = await fetch(`/api/blog?${params.toString()}`);
+        
+        if (!response.ok) {
+          throw new Error('Blog posts could not be fetched');
+        }
+        
+        const data = await response.json();
+        setLatestPosts(data.posts);
+      } catch (err) {
+        console.error('Error fetching latest posts:', err);
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+    
+    fetchLatestPosts();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -51,7 +85,7 @@ export default function Home() {
           <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">Cloud & Infrastructure</h3>
             <p className="text-gray-600 mb-4">AWS, Azure ve GCP servisleri, IaC araçları ve modern altyapı yönetimi çözümleri.</p>
-            <Link href="/category/cloud">
+            <Link href="/category/cloud-infrastructure">
               <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">Keşfet</Button>
             </Link>
           </div>
@@ -64,7 +98,7 @@ export default function Home() {
           <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">Containerization</h3>
             <p className="text-gray-600 mb-4">Docker, Kubernetes, service mesh ve modern container orchestration çözümleri.</p>
-            <Link href="/category/containers">
+            <Link href="/category/containerization">
               <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">Keşfet</Button>
             </Link>
           </div>
@@ -77,7 +111,7 @@ export default function Home() {
           <div className="p-6">
             <h3 className="text-xl font-semibold mb-2">CI/CD & Automation</h3>
             <p className="text-gray-600 mb-4">Jenkins, GitLab CI, GitHub Actions ve modern CI/CD pipeline'ları için otomatizasyon çözümleri.</p>
-            <Link href="/category/cicd">
+            <Link href="/category/cicd-automation">
               <Button variant="outline" className="w-full border-green-600 text-green-600 hover:bg-green-50">Keşfet</Button>
             </Link>
           </div>
@@ -90,46 +124,53 @@ export default function Home() {
           <p className="text-gray-300 mb-8">
             DevOps dünyasındaki en güncel teknolojiler ve pratik çözümler hakkında yazılar
           </p>
-          <div className="space-y-6">
-            <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors">
-              <div className="flex items-center text-sm text-gray-400 mb-1">
-                <span className="bg-green-500 text-green-100 px-2 py-0.5 rounded text-xs font-medium">Kubernetes</span>
-                <span className="mx-2">•</span>
-                <span>15 Nisan 2023</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Kubernetes'te Otomatik Ölçeklendirme: HPA vs. VPA vs. CA</h3>
-              <p className="text-gray-300 mb-4">Kubernetes'in sunduğu üç farklı otomatik ölçeklendirme mekanizmasının karşılaştırması ve gerçek dünya senaryolarındaki uygulamaları.</p>
-              <Link href="/blog/kubernetes-scaling">
-                <Button variant="ghost" className="text-green-400 hover:text-green-300 hover:bg-gray-600 p-0">Devamını Oku →</Button>
-              </Link>
+          
+          {loadingPosts ? (
+            <div className="text-center py-8">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-500 border-r-transparent"></div>
+              <p className="mt-4 text-gray-400">İçerikler yükleniyor...</p>
             </div>
-            
-            <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors">
-              <div className="flex items-center text-sm text-gray-400 mb-1">
-                <span className="bg-green-500 text-green-100 px-2 py-0.5 rounded text-xs font-medium">Terraform</span>
-                <span className="mx-2">•</span>
-                <span>10 Nisan 2023</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Terraform ile Multi-Cloud Stratejileri</h3>
-              <p className="text-gray-300 mb-4">Farklı bulut sağlayıcılarında Terraform ile altyapı yönetimi ve modüler yaklaşımlarla tekrar kullanılabilir kod yapısı oluşturma.</p>
-              <Link href="/blog/terraform-multi-cloud">
-                <Button variant="ghost" className="text-green-400 hover:text-green-300 hover:bg-gray-600 p-0">Devamını Oku →</Button>
-              </Link>
+          ) : latestPosts.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-400">Henüz içerik bulunmuyor.</p>
             </div>
-            
-            <div className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors">
-              <div className="flex items-center text-sm text-gray-400 mb-1">
-                <span className="bg-green-500 text-green-100 px-2 py-0.5 rounded text-xs font-medium">CI/CD</span>
-                <span className="mx-2">•</span>
-                <span>5 Nisan 2023</span>
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">GitHub Actions ile Güvenli Docker Image CI/CD</h3>
-              <p className="text-gray-300 mb-4">GitHub Actions kullanarak Docker imajlarının güvenli bir şekilde build edilmesi, test edilmesi ve dağıtılması için modern pipeline yaklaşımları.</p>
-              <Link href="/blog/github-actions-docker">
-                <Button variant="ghost" className="text-green-400 hover:text-green-300 hover:bg-gray-600 p-0">Devamını Oku →</Button>
-              </Link>
+          ) : (
+            <div className="space-y-6">
+              {latestPosts.map(post => (
+                <div key={post.id} className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-colors">
+                  <div className="flex items-center text-sm text-gray-400 mb-1">
+                    {post.categories.length > 0 && (
+                      <>
+                        <Link 
+                          href={`/category/${post.categories[0].slug}`}
+                          className="bg-green-500 text-green-100 px-2 py-0.5 rounded text-xs font-medium hover:bg-green-600"
+                        >
+                          {post.categories[0].name}
+                        </Link>
+                        <span className="mx-2">•</span>
+                      </>
+                    )}
+                    <span>{formatDate(post.publishedAt || post.createdAt)}</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">
+                    <Link href={`/blog/${post.slug}`} className="hover:text-green-400">
+                      {post.title}
+                    </Link>
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    {post.excerpt || post.content.substring(0, 150)}
+                    {(!post.excerpt && post.content.length > 150) ? '...' : ''}
+                  </p>
+                  <Link href={`/blog/${post.slug}`}>
+                    <Button variant="ghost" className="text-green-400 hover:text-green-300 hover:bg-gray-600 p-0">
+                      Devamını Oku →
+                    </Button>
+                  </Link>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
+          
           <div className="mt-8 text-center">
             <Link href="/blog">
               <Button className="bg-green-600 hover:bg-green-700 text-white">Tüm Yazıları Görüntüle</Button>
@@ -144,22 +185,22 @@ export default function Home() {
           Bu blogda paylaşılan teknolojiler ve araçlar
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-lg bg-gray-100 flex flex-col items-center">
+          <Link href="/category/linux-shell" className="p-4 rounded-lg bg-gray-100 hover:bg-gray-200 flex flex-col items-center transition-colors">
             <Terminal className="h-8 w-8 text-green-500 mb-2" />
             <span className="font-medium">Linux & Shell</span>
-          </div>
-          <div className="p-4 rounded-lg bg-gray-100 flex flex-col items-center">
+          </Link>
+          <Link href="/category/aws-azure" className="p-4 rounded-lg bg-gray-100 hover:bg-gray-200 flex flex-col items-center transition-colors">
             <Cloud className="h-8 w-8 text-green-500 mb-2" />
             <span className="font-medium">AWS & Azure</span>
-          </div>
-          <div className="p-4 rounded-lg bg-gray-100 flex flex-col items-center">
+          </Link>
+          <Link href="/category/docker-k8s" className="p-4 rounded-lg bg-gray-100 hover:bg-gray-200 flex flex-col items-center transition-colors">
             <Server className="h-8 w-8 text-green-500 mb-2" />
             <span className="font-medium">Docker & K8s</span>
-          </div>
-          <div className="p-4 rounded-lg bg-gray-100 flex flex-col items-center">
+          </Link>
+          <Link href="/category/git-cicd" className="p-4 rounded-lg bg-gray-100 hover:bg-gray-200 flex flex-col items-center transition-colors">
             <GitBranch className="h-8 w-8 text-green-500 mb-2" />
             <span className="font-medium">Git & CI/CD</span>
-          </div>
+          </Link>
         </div>
       </div>
     </div>

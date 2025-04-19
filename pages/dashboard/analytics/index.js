@@ -66,12 +66,7 @@ export default function Analytics() {
     recentComments: []
   });
 
-  useEffect(() => {
-    // Kimlik doğrulama kontrolü
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
+  // Artık kimlik doğrulama kontrolü DashboardLayout bileşeni tarafından yapılıyor
 
   useEffect(() => {
     // Gerçek veri yükleme

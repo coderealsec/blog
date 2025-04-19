@@ -89,9 +89,22 @@ function ToastProvider({ children }) {
   )
 }
 
-function toast(props) {
+// Custom hook to use toast functionality
+function useToast() {
   const { addToast } = useToastDispatch()
-  return addToast(props)
+  return {
+    toast: (props) => addToast(props)
+  }
 }
 
-export { ToastProvider, useToastActions, useToastDispatch, toast } 
+// This is just a fallback, but should not be used directly
+// It will cause an error if not used in a component
+const toast = (props) => {
+  console.warn(
+    "You're calling toast() outside of a component. This is not supported. " +
+    "Please use the useToast() hook inside your components instead."
+  )
+  return null
+}
+
+export { ToastProvider, useToastActions, useToastDispatch, useToast, toast } 

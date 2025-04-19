@@ -25,56 +25,59 @@ async function handler(req, res) {
     // Blog yazısını getir
     let post;
     
-    if (isId) {
-      // ID ile ara
-      post = await prisma.blogPost.findUnique({
-        where: { id: slug },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              image: true
-            }
-          },
-          categories: {
-            include: {
-              category: true
-            }
-          },
-          tags: {
-            include: {
-              tag: true
-            }
+    try {
+      // Sorgu zaman aşımı olmaması için daha az ilişki ile ilk sorgu
+      if (isId) {
+        // ID ile ara - Sadece temel verileri getir
+        post = await prisma.blogPost.findUnique({
+          where: { id: slug }
+        });
+      } else {
+        // Slug ile ara - Sadece temel verileri getir
+        post = await prisma.blogPost.findUnique({
+          where: { slug }
+        });
+      }
+
+      // Eğer post bulunursa, ilişkili verileri ayrı sorgularla getir
+      if (post) {
+        // Yazar bilgilerini getir
+        const author = await prisma.user.findUnique({
+          where: { id: post.authorId },
+          select: {
+            id: true,
+            name: true,
+            image: true
           }
-        }
-      });
-    }
-    
-    // ID ile bulunamadıysa veya ID değilse, slug ile ara
-    if (!post) {
-      post = await prisma.blogPost.findUnique({
-        where: { slug },
-        include: {
-          author: {
-            select: {
-              id: true,
-              name: true,
-              image: true
-            }
-          },
-          categories: {
-            include: {
-              category: true
-            }
-          },
-          tags: {
-            include: {
-              tag: true
-            }
+        });
+
+        // Kategorileri getir
+        const categories = await prisma.blogPostToCategory.findMany({
+          where: { postId: post.id },
+          include: {
+            category: true
           }
-        }
-      });
+        });
+
+        // Etiketleri getir
+        const tags = await prisma.blogPostToTag.findMany({
+          where: { postId: post.id },
+          include: {
+            tag: true
+          }
+        });
+
+        // Sonuç objesine ilişkisel verileri ekle
+        post = {
+          ...post,
+          author,
+          categories,
+          tags
+        };
+      }
+    } catch (error) {
+      console.error('Blog post sorgu hatası:', error);
+      throw new Error('Blog yazısı bilgileri alınırken veritabanı hatası oluştu.');
     }
     
     if (!post) {
@@ -82,15 +85,20 @@ async function handler(req, res) {
     }
     
     if (req.method === 'GET') {
-      // Bot olmayanlar için görüntülenme sayısını artır
-      const userAgent = req.headers['user-agent'] || '';
-      const isBot = /bot|crawler|spider|crawling/i.test(userAgent);
-      
-      if (!isBot) {
-        await prisma.blogPost.update({
-          where: { id: post.id },
-          data: { viewCount: { increment: 1 } }
-        });
+      try {
+        // Bot olmayanlar için görüntülenme sayısını artır
+        const userAgent = req.headers['user-agent'] || '';
+        const isBot = /bot|crawler|spider|crawling/i.test(userAgent);
+        
+        if (!isBot) {
+          await prisma.blogPost.update({
+            where: { id: post.id },
+            data: { viewCount: { increment: 1 } }
+          });
+        }
+      } catch (error) {
+        console.error('Görüntülenme sayacı hatası:', error);
+        // Sayaç hatası olsa bile devam et
       }
       
       // Sonucu formatla
@@ -103,32 +111,37 @@ async function handler(req, res) {
       // İlgili blog yazılarını getir (aynı kategorideki son 3 yazı)
       let relatedPosts = [];
       
-      if (post.categories.length > 0) {
-        const categoryIds = post.categories.map(pc => pc.category.id);
-        
-        relatedPosts = await prisma.blogPost.findMany({
-          where: {
-            id: { not: post.id },
-            published: true,
-            categories: {
-              some: {
-                categoryId: { in: categoryIds }
+      try {
+        if (post.categories.length > 0) {
+          const categoryIds = post.categories.map(pc => pc.category.id);
+          
+          relatedPosts = await prisma.blogPost.findMany({
+            where: {
+              id: { not: post.id },
+              published: true,
+              categories: {
+                some: {
+                  categoryId: { in: categoryIds }
+                }
               }
+            },
+            orderBy: {
+              publishedAt: 'desc'
+            },
+            take: 3,
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              excerpt: true,
+              imageUrl: true,
+              publishedAt: true
             }
-          },
-          orderBy: {
-            publishedAt: 'desc'
-          },
-          take: 3,
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            excerpt: true,
-            imageUrl: true,
-            publishedAt: true
-          }
-        });
+          });
+        }
+      } catch (error) {
+        console.error('İlgili yazılar sorgu hatası:', error);
+        // İlgili yazılar getirilemezse boş dizi ile devam et
       }
       
       return res.status(200).json({
@@ -177,17 +190,22 @@ async function handler(req, res) {
           const newSlug = slugify(title);
           
           // Aynı slug'a sahip başka bir yazı var mı kontrol et
-          const existingPost = await prisma.blogPost.findFirst({
-            where: {
-              slug: newSlug,
-              id: { not: post.id }
+          try {
+            const existingPost = await prisma.blogPost.findFirst({
+              where: {
+                slug: newSlug,
+                id: { not: post.id }
+              }
+            });
+            
+            if (existingPost) {
+              updates.slug = `${newSlug}-${Math.floor(Math.random() * 1000)}`;
+            } else {
+              updates.slug = newSlug;
             }
-          });
-          
-          if (existingPost) {
-            updates.slug = `${newSlug}-${Math.floor(Math.random() * 1000)}`;
-          } else {
-            updates.slug = newSlug;
+          } catch (error) {
+            console.error('Slug kontrolü hatası:', error);
+            updates.slug = `${newSlug}-${Date.now()}`; // Hata durumunda benzersiz bir slug oluştur
           }
         }
       }
@@ -276,6 +294,9 @@ async function handler(req, res) {
         }
         
         return updated;
+      }, {
+        // Transaction için zaman aşımı süresini artır
+        timeout: 20000 // 20 saniye
       });
       
       // Güncellenmiş yazıyı tüm ilişkileriyle birlikte getir

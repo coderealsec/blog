@@ -55,26 +55,53 @@ const CommentForm = ({ onCommentAdded }) => {
     setError(null);
     
     try {
-      const response = await fetch(`/api/blog/${slug}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content,
-        }),
-      });
+      // İstek gönderilirken 3 deneme yap
+      let retryCount = 0;
+      let success = false;
+      let newComment;
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Yorum eklenirken bir hata oluştu');
+      while (retryCount < 2 && !success) {
+        try {
+          const response = await fetch(`/api/blog/${slug}/comments`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              content,
+            }),
+            // Daha uzun bir zaman aşımı süresi
+            timeout: 5000
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            if (response.status === 401) {
+              throw new Error('Yorum yapmak için giriş yapmalısınız');
+            } else {
+              throw new Error(errorData.message || 'Yorum eklenirken bir hata oluştu');
+            }
+          }
+          
+          newComment = await response.json();
+          success = true;
+        } catch (err) {
+          retryCount++;
+          
+          // 401 (Yetkisiz) hataları için tekrar deneme yapma
+          if (err.message.includes('giriş yapmalısınız') || retryCount >= 2) {
+            throw err;
+          }
+          
+          console.error(`Yorum ekleme denemesi ${retryCount}/2 başarısız:`, err);
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
       }
       
-      const newComment = await response.json();
       onCommentAdded(newComment);
       setContent('');
     } catch (err) {
-      setError(err.message);
+      setError(err.message || 'Yorum gönderilemedi. Lütfen daha sonra tekrar deneyin.');
     } finally {
       setIsSubmitting(false);
     }
@@ -127,13 +154,44 @@ export default function BlogPostDetail() {
   const fetchBlogPost = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      const response = await fetch(`/api/blog/${slug}`);
-      if (!response.ok) {
-        throw new Error('Blog yazısı bulunamadı');
+      // Hata denemesi sayısı
+      let retryCount = 0;
+      let success = false;
+      let data;
+      
+      // Bağlantı sorunu varsa 3 kez deneme yap
+      while (retryCount < 3 && !success) {
+        try {
+          const response = await fetch(`/api/blog/${slug}`, {
+            // Daha uzun bir zaman aşımı süresi
+            timeout: 15000
+          });
+          
+          if (!response.ok) {
+            if (response.status === 404) {
+              throw new Error('Blog yazısı bulunamadı');
+            } else {
+              throw new Error(`Sunucu hatası: ${response.status}`);
+            }
+          }
+          
+          data = await response.json();
+          success = true;
+        } catch (err) {
+          retryCount++;
+          console.error(`Blog yazısı getirme denemesi ${retryCount}/3 başarısız:`, err);
+          
+          // Eğer son deneme değilse biraz bekle
+          if (retryCount < 3) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            throw err;
+          }
+        }
       }
       
-      const data = await response.json();
       setPost(data.post);
       setRelatedPosts(data.relatedPosts || []);
       setLikeCount(data.post.likeCount || 0);
@@ -141,7 +199,7 @@ export default function BlogPostDetail() {
       
     } catch (err) {
       console.error('Blog yazısı getirme hatası:', err);
-      setError('Blog yazısı yüklenirken bir hata oluştu');
+      setError('Blog yazısı yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
     } finally {
       setLoading(false);
     }
@@ -150,22 +208,41 @@ export default function BlogPostDetail() {
   // Yorumları getir
   const fetchComments = async () => {
     try {
-      const response = await fetch(`/api/blog/${slug}/comments`);
-      if (!response.ok) {
-        throw new Error('Yorumlar getirilemedi');
+      let retryCount = 0;
+      let success = false;
+      let data;
+      
+      // Bağlantı sorunu varsa 2 kez deneme yap
+      while (retryCount < 2 && !success) {
+        try {
+          const response = await fetch(`/api/blog/${slug}/comments`);
+          
+          if (!response.ok) {
+            throw new Error('Yorumlar getirilemedi');
+          }
+          
+          data = await response.json();
+          success = true;
+        } catch (err) {
+          retryCount++;
+          console.error(`Yorumları getirme denemesi ${retryCount}/2 başarısız:`, err);
+          
+          // Eğer son deneme değilse biraz bekle
+          if (retryCount < 2) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+          } else {
+            throw err;
+          }
+        }
       }
       
-      const data = await response.json();
       setComments(data.comments || []);
       
     } catch (err) {
       console.error('Yorumları getirme hatası:', err);
+      // Yorumlar yüklenemezse sessizce başarısız ol, sayfa yine de çalışabilir
+      setComments([]);
     }
-  };
-  
-  // Yeni yorum eklendiğinde yorumları güncelle
-  const handleCommentAdded = (newComment) => {
-    setComments(prevComments => [newComment, ...prevComments]);
   };
   
   // Blog yazısını beğen/beğenme
@@ -175,10 +252,17 @@ export default function BlogPostDetail() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        // Daha uzun bir zaman aşımı süresi
+        timeout: 5000
       });
       
       if (!response.ok) {
+        if (response.status === 401) {
+          // Kullanıcı girişi yapmamış
+          alert('Beğenmek için giriş yapmalısınız.');
+          return;
+        }
         throw new Error('İşlem gerçekleştirilemedi');
       }
       
@@ -188,6 +272,8 @@ export default function BlogPostDetail() {
       
     } catch (err) {
       console.error('Beğenme hatası:', err);
+      // Kullanıcıya görsel bir geri bildirim göster
+      alert('Beğeni işlemi sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
     }
   };
   
@@ -205,6 +291,16 @@ export default function BlogPostDetail() {
       navigator.clipboard.writeText(window.location.href)
         .then(() => alert('Bağlantı kopyalandı!'))
         .catch(err => console.error('Kopyalama hatası:', err));
+    }
+  };
+  
+  // Yeni yorum eklendiğinde yorumları güncelle
+  const handleCommentAdded = (newComment) => {
+    try {
+      setComments(prevComments => [newComment, ...prevComments]);
+    } catch (err) {
+      console.error('Yorum ekleme hatası:', err);
+      // Hatayı sessizce yakala ve yorum listesini değiştirme
     }
   };
   

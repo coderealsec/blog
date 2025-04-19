@@ -53,13 +53,6 @@ export default function Media() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    // Kimlik doğrulama kontrolü
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
     if (status === "authenticated") {
       fetchMedia();
     }

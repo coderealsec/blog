@@ -19,6 +19,7 @@ model User {
   updatedAt     DateTime    @updatedAt
   accounts      Account[]
   likes         BlogLike[]
+  bookmarks     BlogBookmark[]
   blogPosts     BlogPost[]
   comments      Comment[]
   sessions      Session[]
@@ -77,6 +78,7 @@ model BlogPost {
   authorId       String
   likeCount      Int                  @default(0)
   likes          BlogLike[]
+  bookmarks      BlogBookmark[]
   author         User                 @relation(fields: [authorId], references: [id])
   categories     BlogPostToCategory[]
   tags           BlogPostToTag[]
@@ -202,6 +204,20 @@ model Settings {
 
   @@index([section])
   @@index([key])
+}
+
+model BlogBookmark {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  blogId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blog      BlogPost @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blogId])
+  @@index([userId])
+  @@index([blogId])
 }
 
 enum Role {

@@ -4,7 +4,7 @@ import { NextResponse } from 'next/server';
 export async function middleware(req) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const isAuthenticated = !!token;
-  const isAdmin = token?.role === 'ADMIN';
+  const isAuthorized = token?.role === 'ADMIN' || token?.role === 'EDITOR';
   
   // Get the pathname from the URL
   const { pathname } = req.nextUrl;
@@ -18,11 +18,10 @@ export async function middleware(req) {
       return NextResponse.redirect(url);
     }
 
-    // Only allow admin users to access dashboard
-    if (!isAdmin) {
-      // Redirect non-admin users to homepage with an error message
+    // Only allow admin or editor users to access dashboard
+    if (!isAuthorized) {
+      // Redirect non-authorized users to homepage
       const url = new URL('/', req.url);
-      url.searchParams.set('error', 'admin_required');
       return NextResponse.redirect(url);
     }
   }

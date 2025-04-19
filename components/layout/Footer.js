@@ -9,20 +9,18 @@ export default function Footer() {
       title: 'İçerikler',
       links: [
         { name: 'Tüm Yazılar', href: '/blog' },
-        { name: 'En Çok Okunanlar', href: '/blog/popular' },
-        { name: 'Son Yazılar', href: '/blog/latest' },
-        { name: 'Seriler', href: '/series' },
       ],
     },
     {
       title: 'Teknolojiler',
       links: [
-        { name: 'Docker', href: '/category/docker' },
-        { name: 'Kubernetes', href: '/category/kubernetes' },
-        { name: 'CI/CD', href: '/category/cicd' },
-        { name: 'AWS', href: '/category/aws' },
-        { name: 'Azure', href: '/category/azure' },
-        { name: 'Infrastructure as Code', href: '/category/iac' },
+        { name: 'Linux & Shell', href: '/category/linux-shell' },
+        { name: 'AWS & Azure', href: '/category/aws-azure' },
+        { name: 'Docker & K8s', href: '/category/docker-k8s' },
+        { name: 'Git & CI/CD', href: '/category/git-cicd' },
+        { name: 'Cloud & Infrastructure', href: '/category/cloud-infrastructure' },
+        { name: 'Containerization', href: '/category/containerization' },
+        { name: 'CI/CD & Automation', href: '/category/cicd-automation' },
       ],
     },
     {
@@ -30,8 +28,6 @@ export default function Footer() {
       links: [
         { name: 'Projeler', href: '/projects' },
         { name: 'GitHub Repo', href: 'https://github.com/devopshub' },
-        { name: 'Eğitimler', href: '/tutorials' },
-        { name: 'Araçlar', href: '/tools' },
       ],
     },
   ];

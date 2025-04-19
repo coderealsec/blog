@@ -69,13 +69,6 @@ export default function Comments() {
   const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
-    // Kimlik doğrulama kontrolü
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
     if (status === "authenticated") {
       fetchComments();
     }

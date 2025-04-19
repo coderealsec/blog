@@ -45,13 +45,6 @@ export default function BlogPosts() {
   const [sorting, setSorting] = useState({ field: "createdAt", direction: "desc" });
 
   useEffect(() => {
-    // Check authentication status
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
     if (status === "authenticated") {
       fetchPosts();
     }

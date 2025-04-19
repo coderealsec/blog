@@ -38,13 +38,6 @@ export default function EditBlogPost() {
     seoKeywords: "",
   });
 
-  // Check authentication
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
-
   // Fetch post data
   useEffect(() => {
     if (status === "authenticated" && slug) {

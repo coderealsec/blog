@@ -7,16 +7,8 @@ import { RocketIcon, FileTextIcon, UsersIcon, MessageSquareIcon } from 'lucide-r
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Check authentication status
-    if (status === 'unauthenticated') {
-      router.push('/auth/login');
-    }
-    
-    // With middleware in place, only admin users can reach this point
-  }, [session, status, router]);
+  
+  // Artık yetki kontrolü DashboardLayout bileşeninde yapılıyor
 
   // Show loading state
   if (status === 'loading') {

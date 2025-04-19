@@ -226,7 +226,17 @@ export function DashboardSidebar({ className }) {
           </div>
           <div className="text-sm overflow-hidden">
             <p className="font-medium truncate">{session?.user?.name || session?.user?.email}</p>
-            <p className="text-xs text-gray-500 truncate">{session?.user?.role || "User"}</p>
+            <div className="flex items-center">
+              <span className={`text-xs px-1.5 py-0.5 rounded ${
+                session?.user?.role === 'ADMIN' 
+                  ? 'bg-red-100 text-red-700' 
+                  : session?.user?.role === 'EDITOR' 
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-gray-100 text-gray-700'
+              }`}>
+                {session?.user?.role || "User"}
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -81,12 +81,7 @@ export default function UsersPage() {
     { value: "USER", label: "Kullanıcı" }
   ];
 
-  useEffect(() => {
-    // Kimlik doğrulama kontrolü
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
-  }, [status, router]);
+  // Artık kimlik doğrulama kontrolü DashboardLayout bileşeni tarafından yapılıyor
 
   useEffect(() => {
     if (status === "authenticated") {
