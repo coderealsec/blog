@@ -15,6 +15,7 @@ import { slugify } from '@/lib/utils';
  */
 async function handleGetCategories(req, res) {
   try {
+    console.log('Fetching categories from database...');
     const categories = await prisma.blogCategory.findMany({
       orderBy: { name: 'asc' },
       select: {
@@ -31,6 +32,8 @@ async function handleGetCategories(req, res) {
       },
     });
 
+    console.log(`Found ${categories.length} categories`);
+
     // Transform data to include post count
     const formattedCategories = categories.map(category => ({
       id: category.id,
@@ -44,7 +47,12 @@ async function handleGetCategories(req, res) {
     return res.status(200).json(formattedCategories);
   } catch (error) {
     console.error('Categories fetch error:', error);
-    return res.status(500).json({ message: 'Kategoriler getirilirken bir hata oluştu' });
+    // Daha detaylı hata mesajı
+    return res.status(500).json({ 
+      message: 'Kategoriler getirilirken bir hata oluştu', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 }
 
@@ -64,55 +72,64 @@ async function handler(req, res) {
     return res.status(200).end();
   }
   
-  // Only allow GET method
-  if (req.method === 'GET') {
-    return handleGetCategories(req, res);
-  } else if (req.method === 'POST') {
-    // Yetkilendirme kontrolü - sadece admin kullanıcılar
-    const session = await getServerSession(req, res, authOptions);
-    
-    if (!session || session.user.role !== 'ADMIN') {
-      return res.status(403).json({ 
-        error: 'Yetkisiz erişim' 
-      });
-    }
-    
-    const { name, description, isActive = true } = req.body;
-    
-    // Validasyon
-    if (!name || name.trim().length < 2) {
-      return res.status(400).json({ 
-        error: 'Kategori adı en az 2 karakter olmalıdır' 
-      });
-    }
-    
-    // Slug oluştur
-    const slug = slugify(name);
-    
-    // Aynı slug ile başka kategori var mı kontrol et
-    const existingCategory = await prisma.blogCategory.findUnique({
-      where: { slug }
-    });
-    
-    if (existingCategory) {
-      return res.status(400).json({ 
-        error: 'Bu isimde bir kategori zaten var' 
-      });
-    }
-    
-    // Yeni kategori oluştur
-    const newCategory = await prisma.blogCategory.create({
-      data: {
-        name,
-        slug,
-        description,
-        isActive: Boolean(isActive)
+  try {
+    // Only allow GET method
+    if (req.method === 'GET') {
+      return handleGetCategories(req, res);
+    } else if (req.method === 'POST') {
+      // Yetkilendirme kontrolü - sadece admin kullanıcılar
+      const session = await getServerSession(req, res, authOptions);
+      
+      if (!session || session.user.role !== 'ADMIN') {
+        return res.status(403).json({ 
+          error: 'Yetkisiz erişim' 
+        });
       }
+      
+      const { name, description, isActive = true } = req.body;
+      
+      // Validasyon
+      if (!name || name.trim().length < 2) {
+        return res.status(400).json({ 
+          error: 'Kategori adı en az 2 karakter olmalıdır' 
+        });
+      }
+      
+      // Slug oluştur
+      const slug = slugify(name);
+      
+      // Aynı slug ile başka kategori var mı kontrol et
+      const existingCategory = await prisma.blogCategory.findUnique({
+        where: { slug }
+      });
+      
+      if (existingCategory) {
+        return res.status(400).json({ 
+          error: 'Bu isimde bir kategori zaten var' 
+        });
+      }
+      
+      // Yeni kategori oluştur
+      const newCategory = await prisma.blogCategory.create({
+        data: {
+          name,
+          slug,
+          description,
+          isActive: Boolean(isActive)
+        }
+      });
+      
+      return res.status(201).json(newCategory);
+    } else {
+      return res.status(405).json({ message: 'Method not allowed' });
+    }
+  } catch (error) {
+    console.error('API error:', error);
+    return res.status(500).json({ 
+      message: 'Sunucu hatası', 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
-    
-    return res.status(201).json(newCategory);
-  } else {
-    return res.status(405).json({ message: 'Method not allowed' });
   }
 }
 

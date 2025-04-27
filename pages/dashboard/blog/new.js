@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { BasicEditor } from "@/components/dashboard/BasicEditor";
+import { SimpleEditor } from "@/components/dashboard/SimpleEditor";
 import { ImageUploader } from "@/components/dashboard/ImageUploader";
 import { AlertCircle, ArrowLeft, Save, Image } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -225,14 +225,10 @@ export default function NewBlogPost() {
                 <div>
                   <Label htmlFor="editor">İçerik</Label>
                   <div className="mt-1.5">
-                    <BasicEditor
+                    <SimpleEditor
                       value={formData.content}
                       onChange={handleEditorChange}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Bu basit editör ile içeriğinizi düzenleyebilir, resim ekleyebilir ve temel formatlamalar yapabilirsiniz.
-                      İçerik zorunlu bir alandır.
-                    </p>
                   </div>
                 </div>
               </CardContent>

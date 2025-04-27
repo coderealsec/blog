@@ -6,9 +6,16 @@ import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const DropdownMenu = DropdownMenuPrimitive.Root
+const DropdownMenu = React.forwardRef((props, ref) => {
+  // React 19 uyumluluğu için açık bir referans iletelim
+  return <DropdownMenuPrimitive.Root {...props} ref={ref} />
+})
+DropdownMenu.displayName = "DropdownMenu"
 
-const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
+const DropdownMenuTrigger = React.forwardRef((props, ref) => {
+  return <DropdownMenuPrimitive.Trigger {...props} ref={ref} />
+})
+DropdownMenuTrigger.displayName = "DropdownMenuTrigger"
 
 const DropdownMenuGroup = DropdownMenuPrimitive.Group
 
