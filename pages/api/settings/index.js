@@ -12,9 +12,9 @@ const limiter = rateLimit({
 // Default settings when no DB settings exist
 const defaultSettings = {
   general: {
-    siteName: "DevOpsHub",
+    siteName: "Harun ÖNER",
     siteDescription: "DevOps, Cloud ve Konteynerleştirme hakkında güncel bilgiler",
-    siteUrl: "https://devopshub.com",
+    siteUrl: "https://harunoner.com",
     logoUrl: "/images/logo.png",
     faviconUrl: "/images/favicon.ico",
     defaultLanguage: "tr",
@@ -28,7 +28,7 @@ const defaultSettings = {
     showShareButtons: true
   },
   seo: {
-    metaTitle: "DevOpsHub - DevOps, Kubernetes ve Cloud Teknolojileri",
+    metaTitle: "Harun ÖNER - DevOps, Kubernetes ve Cloud Teknolojileri",
     metaDescription: "DevOps, Kubernetes, Docker, CI/CD, AWS, Azure ve daha fazlası hakkında en güncel bilgiler",
     metaKeywords: "devops, kubernetes, docker, cloud, aws, azure, ci/cd, jenkins, github actions",
     googleAnalyticsId: "",
@@ -39,7 +39,7 @@ const defaultSettings = {
     enableSchemaMarkup: true,
     enableOpenGraph: true,
     enableTwitterCards: true,
-    twitterUsername: "@devopshub",
+    twitterUsername: "@harunoner",
     facebookAppId: ""
   },
   comments: {
@@ -61,18 +61,18 @@ const defaultSettings = {
     smtpPort: 587,
     smtpUsername: "info@example.com",
     smtpPassword: "******",
-    senderEmail: "info@devopshub.com",
-    senderName: "DevOpsHub",
+    senderEmail: "info@harunoner.com",
+    senderName: "Harun ÖNER",
     enableEmailNotifications: true,
     notifyOnNewComment: true,
     notifyOnNewUser: true
   },
   social: {
-    twitter: "https://twitter.com/devopshub",
-    facebook: "https://facebook.com/devopshub",
+    twitter: "https://twitter.com/harunoner",
+    facebook: "https://facebook.com/harunoner",
     instagram: "",
-    linkedin: "https://linkedin.com/company/devopshub",
-    github: "https://github.com/devopshub",
+    linkedin: "https://linkedin.com/in/harunoner",
+    github: "https://github.com/harunoner",
     youtube: "",
     medium: ""
   },

@@ -244,12 +244,17 @@ async function handler(req, res) {
       // İlişkileri sil ve yazıyı sil (transaction ile)
       await prisma.$transaction([
         // İlgili yorumları sil
-        prisma.blogComment.deleteMany({
+        prisma.comment.deleteMany({
           where: { blogId: post.id }
         }),
         
         // İlgili beğenileri sil
         prisma.blogLike.deleteMany({
+          where: { blogId: post.id }
+        }),
+        
+        // İlgili yer imlerini sil
+        prisma.blogBookmark.deleteMany({
           where: { blogId: post.id }
         }),
         

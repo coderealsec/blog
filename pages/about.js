@@ -24,7 +24,7 @@ import { Badge } from '@/components/ui/badge';
 export default function About() {
   // Update page title
   useEffect(() => {
-    document.title = 'Hakkımda - DevOpsHub';
+    document.title = 'Hakkımda - Harun ÖNER';
   }, []);
 
   const skills = [
@@ -130,7 +130,7 @@ export default function About() {
                      className="text-gray-600 hover:text-blue-400 transition-colors">
               <Twitter className="w-5 h-5" />
             </a>
-                  <a href="mailto:harun@devopshub.com" 
+                  <a href="mailto:harun@harunoner.com" 
                      className="text-gray-600 hover:text-red-500 transition-colors">
               <Mail className="w-5 h-5" />
             </a>
@@ -262,24 +262,18 @@ export default function About() {
           </div>
         </div>
 
-        {/* Contact CTA */}
+        {/* Modified CTA */}
         <Card className="text-center bg-gradient-to-r from-green-50 to-emerald-50 border-0">
           <CardHeader>
-            <CardTitle>Bana Ulaşın</CardTitle>
+            <CardTitle>Blog Yazılarıma Göz Atın</CardTitle>
             <CardDescription>
-          DevOps, bulut teknolojileri veya altyapı otomasyonu konularında işbirliği yapmak, danışmanlık almak veya sadece sohbet etmek isterseniz, iletişime geçmekten çekinmeyin.
+              DevOps, bulut teknolojileri ve altyapı otomasyonu konularında yazdığım blog yazılarına göz atabilirsiniz.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center gap-4">
-              <Link href="/contact">
-                <Button className="bg-green-600 hover:bg-green-700">
-            <Mail className="mr-2 h-4 w-4" />
-            İletişim Sayfası
-          </Button>
-        </Link>
+            <div className="flex justify-center">
               <Link href="/blog">
-                <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">
+                <Button className="bg-green-600 hover:bg-green-700">
                   Blog Yazılarım
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

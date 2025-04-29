@@ -12,7 +12,7 @@ import { formatDate, truncateText } from '@/lib/utils';
 
 // Sayfa başlığı
 export const metadata = {
-  title: 'DevOps Blog',
+  title: 'Harun ÖNER Blog',
   description: 'En güncel DevOps teknolojileri ve uygulamaları hakkında bilgiler',
 };
 
@@ -207,7 +207,7 @@ export default function BlogPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">DevOps Blog</h1>
+        <h1 className="text-4xl font-bold mb-4">Harun ÖNER Blog</h1>
         <p className="text-gray-600 mb-8">
           Docker, Kubernetes, CI/CD ve bulut teknolojileri hakkında güncel içerikler
         </p>

@@ -22,8 +22,8 @@ export default function Layout({ children, title = 'Blog' }) {
   return (
     <>
       <Head>
-        <title>{`${title} | DevOpsHub`}</title>
-        <meta name="description" content="DevOps, Kubernetes ve Cloud Teknolojileri" />
+        <title>{`${title} | Harun ÖNER`}</title>
+        <meta name="description" content="DevOps, Kubernetes ve Cloud Teknolojileri - Harun ÖNER" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -32,7 +32,7 @@ export default function Layout({ children, title = 'Blog' }) {
         {/* Navbar sadece client-side'da render edilsin */}
         {mounted && <Navbar session={session} />}
         
-        <main className="flex-grow">
+        <main className="flex-grow pt-16 pb-24">
           {children}
         </main>
         

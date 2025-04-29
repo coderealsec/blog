@@ -36,9 +36,7 @@ const navigation = [
       { name: 'CI/CD', href: '/category/ci-cd' }
     ]
   },
-  { name: 'Projeler', href: '/projects' },
   { name: 'Hakkımda', href: '/about' },
-  { name: 'İletişim', href: '/contact' },
 ];
 
 // Helper function to get user initials for avatar fallback
@@ -58,6 +56,7 @@ export default function Navbar({ session }) {
   const [navigationWithCategories, setNavigationWithCategories] = useState(navigation);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
   
   // Yeni eklenecek dropdown menu state'leri
   const [techDropdownOpen, setTechDropdownOpen] = useState(false);
@@ -74,6 +73,23 @@ export default function Navbar({ session }) {
       window.location.href = "/";
     }
   };
+
+  // Scroll event handler
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 10) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   // Fetch categories from API
   useEffect(() => {
@@ -140,18 +156,24 @@ export default function Navbar({ session }) {
   }, []);
 
   return (
-    <nav className="bg-gray-900 border-b border-gray-800">
+    <nav className={`border-b border-gray-800 fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-gray-900/90 backdrop-blur-sm shadow-lg' 
+        : 'bg-gray-900'
+    }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo on the left */}
+          <div className="flex-shrink-0">
+            <Link href="/" className="flex items-center">
               <Terminal className="h-8 w-8 text-green-500" />
-              <span className="ml-2 text-xl font-bold text-white font-mono">DevOps<span className="text-green-500">Hub</span></span>
+              <span className="ml-2 text-xl font-bold text-white font-mono">Harun <span className="text-green-500">ÖNER</span></span>
             </Link>
+          </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:ml-6 md:flex md:items-center md:space-x-1">
+          {/* Desktop Navigation centered */}
+          <div className="hidden md:flex md:items-center md:justify-center md:flex-1">
+            <div className="flex items-center space-x-1">
               {navigationWithCategories.map((item) => {
                 if (item.children && item.children.length > 0) {
                   return (
@@ -197,7 +219,8 @@ export default function Navbar({ session }) {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4">
+          {/* User auth on the right */}
+          <div className="hidden md:flex items-center space-x-4 flex-shrink-0">
             {session ? (
               <div className="relative">
                 <button
@@ -273,7 +296,7 @@ export default function Navbar({ session }) {
                   <div className="flex items-center justify-between border-b border-gray-800 pb-4">
                     <Link href="/" className="flex items-center" onClick={() => setIsOpen(false)}>
                       <Terminal className="h-8 w-8 text-green-500 mr-2" />
-                      <span className="text-xl font-bold font-mono">DevOps<span className="text-green-500">Hub</span></span>
+                      <span className="text-xl font-bold font-mono">Harun <span className="text-green-500">ÖNER</span></span>
                     </Link>
                   </div>
 

@@ -83,7 +83,9 @@ export default function BlogPosts() {
       });
       
       if (!response.ok) {
-        throw new Error("Blog yazısı silinemedi");
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || errorData.error || "Blog yazısı silinemedi";
+        throw new Error(errorMessage);
       }
       
       // Yazı silindikten sonra listeyi güncelle
@@ -91,7 +93,7 @@ export default function BlogPosts() {
       
     } catch (err) {
       console.error("Blog yazısı silinemedi:", err);
-      alert("Blog yazısı silinirken bir hata oluştu");
+      alert(`Blog yazısı silinirken bir hata oluştu: ${err.message}`);
     }
   };
 

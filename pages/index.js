@@ -60,10 +60,12 @@ export default function Home() {
 
       <div className="text-center max-w-3xl mx-auto my-16">
         <Terminal className="h-16 w-16 text-green-500 mx-auto mb-4" />
-        <h1 className="text-5xl font-bold mb-6">DevOps<span className="text-green-500">Hub</span></h1>
-        <p className="text-xl text-gray-600 mb-8">
-          Docker, Kubernetes, CI/CD, Cloud ve Infrastructure as Code konularında teknik içerikler, uygulamalı örnekler ve en iyi pratikler.
-        </p>
+        <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
+          <h1 className="text-5xl font-bold mb-6">Harun <span className="text-green-500">ÖNER</span></h1>
+          <p className="text-xl text-gray-600 mb-8">
+            DevOps dünyasındaki en güncel teknolojiler ve pratik çözümler hakkında yazılar
+          </p>
+        </div>
         
         <div className="flex flex-col sm:flex-row justify-center gap-4 mb-12">
           <Link href="/blog">

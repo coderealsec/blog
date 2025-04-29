@@ -127,7 +127,7 @@ export function DashboardSidebar({ className }) {
       <div className="px-3 py-2">
         <div className="mb-6 px-4">
           <Link href="/dashboard" onClick={closeMenu}>
-            <h2 className="text-2xl font-bold">DevOpsHub</h2>
+            <h2 className="text-2xl font-bold">Harun ÖNER</h2>
             <p className="text-sm text-gray-500">Yönetim Paneli</p>
           </Link>
         </div>

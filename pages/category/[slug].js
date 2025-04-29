@@ -144,7 +144,7 @@ export default function CategoryPage() {
       const data = await response.json();
       console.log('Category data received:', data);
       setCategoryData(data);
-      document.title = `${data.name} - DevOpsHub`;
+      document.title = `${data.name} - Harun ÖNER`;
       
     } catch (err) {
       console.error('Kategori bilgileri getirme hatası:', err);

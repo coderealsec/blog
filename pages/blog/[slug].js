@@ -282,7 +282,7 @@ export default function BlogPostDetail() {
     if (navigator.share) {
       navigator.share({
         title: post.title,
-        text: post.excerpt || 'DevOpsHub\'da bir yazı',
+        text: post.excerpt || 'Harun ÖNER\'de bir yazı',
         url: window.location.href,
       })
       .catch((error) => console.log('Paylaşım hatası:', error));
